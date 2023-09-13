@@ -38,6 +38,16 @@ else:
 # Convertir lista en Dataframe
 # df = pd.json_normalize(selected_data, sep='_')
 df = pd.json_normalize(data, sep='_')
+df.drop(261, inplace=True)
+
+# print(df)
+
+# for i in df:
+#     print(type(df['Closing Price']))
+#     print(df['Closing Price'])
+#     break
+
+#****************************************
 
 # Escalar precio a rango entre 0 y 1
 scaler = MinMaxScaler(feature_range=(0,1))
