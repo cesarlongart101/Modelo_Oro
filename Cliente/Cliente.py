@@ -2,8 +2,9 @@ import requests
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense,Dropout,GRU
+from tensorflow import keras
+from keras.models import Sequential
+from keras.layers import Dense,Dropout,GRU
 import matplotlib.pyplot as plt
 
 
@@ -11,25 +12,11 @@ url = 'http://localhost:4000/obtener_datos_ano'
 response = requests.get(url)
 fecha_inicio = "31 Jan 2022"
 day_counter = 60
-counter = 0
-encontrada = False
-selected_data = []
 
 # Respuesta de ENDPOINT, cargar y filtrar los datos
 if response.status_code == 200:
     data = response.json()
     data.reverse()
-    # for dict in data:
-    #     if day_counter > counter:
-    #         if encontrada:
-    #             selected_data.append(dict)
-    #             counter = counter + 1
-    #         elif dict["date"] == fecha_inicio:
-    #             selected_data.append(dict)
-    #             encontrada = True
-    #             counter = counter + 1
-    #     else:
-    #         break
 else:
     print('Error al hacer la solicitud')
 
@@ -39,15 +26,6 @@ else:
 # df = pd.json_normalize(selected_data, sep='_')
 df = pd.json_normalize(data, sep='_')
 df.drop(261, inplace=True)
-
-# print(df)
-
-# for i in df:
-#     print(type(df['Closing Price']))
-#     print(df['Closing Price'])
-#     break
-
-#****************************************
 
 # Escalar precio a rango entre 0 y 1
 scaler = MinMaxScaler(feature_range=(0,1))
@@ -62,11 +40,6 @@ for x in range(day_counter, len(scaled_data)):
   x_train.append(scaled_data[x-day_counter:x,0])
   y_train.append(scaled_data[x,0])
 
-# print(x_train)
-# print(len(x_train))
-# print("**********************************")
-# print(y_train)
-# print(len(y_train))
 
 #Convierte las listas x_train y y_train en arrays 
 x_train,y_train = np.array(x_train),np.array(y_train)
@@ -91,10 +64,12 @@ model.compile(optimizer='adam', loss='mean_squared_error')
 model.fit(x_train,y_train,epochs=25,batch_size=32)
 
 # Cargar los datos del test
-hist_test = data
+hist_test = df
 actual_prices = hist_test['Closing Price'].values
 
-total_dataset = pd.concat((data['Closing Price'],hist_test['Closing Price']),axis=0)
+
+
+total_dataset = pd.concat((df['Closing Price'],hist_test['Closing Price']),axis=0)
 model_inputs = total_dataset[len(total_dataset)-len(hist_test)-day_counter:].values
 model_inputs = scaler.transform(model_inputs.reshape(-1,1))
 
@@ -112,6 +87,6 @@ predicted_prices = scaler.inverse_transform(predicted_prices)
 
 # Graficos precio real vs precio de las predicciones
 plt.plot(actual_prices,color="black",label=f"Precio real del ORO")
-plt.plot(predicted_prices,color="blue",label=f"PRedicción precio del ORO")
+plt.plot(predicted_prices,color="blue",label=f"Predicción precio del ORO")
 plt.legend()
 plt.show()
